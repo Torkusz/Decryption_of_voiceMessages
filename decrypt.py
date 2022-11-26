@@ -65,7 +65,7 @@ async def start(message: types.Message):
 @dp.message_handler(commands =("help", "помощь"))
 async def help(message: types.Message):
 	buttons = [
-		types.InlineKeyboardButton(text="Связь", url="https://t.me/torkusz"),
+		types.InlineKeyboardButton(text="Связь", url="https://t.me/Torkusz"),
 		types.InlineKeyboardButton(text="Проект на GitHub", url="https://github.com/Torkusz/Decryption_of_voiceMessages")
 	]
 	keyboard = types.InlineKeyboardMarkup(row_width=1)
