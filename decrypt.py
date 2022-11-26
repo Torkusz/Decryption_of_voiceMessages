@@ -23,16 +23,14 @@ import requests
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+from config import *
 
-today = True
-TOKEN = "5659004732:AAFAd9HZauX1tZh29z6IT76WaEDDyp9ydHc"
-
-#База данных
-conn = sqlite3.connect('dark.db', check_same_thread=False)
+#Database
+conn = sqlite3.connect('db.db', check_same_thread=False)
 cursor = conn.cursor()
 
-def db(user_id: int, message: int, admin: bool, mute: int, message_trand: int, message_flood: int, message_game: int, username: str, lastmessage: str, mess: int):
-	cursor.execute('INSERT INTO main (user_id, message, admin, mute, message_trand, message_flood, message_game, username, lastmessage, mess) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', (user_id, message, admin, mute, message_trand, message_trand, message_game, username, lastmessage, mess))
+def db(user_id: int, requests: int, data: str, admin: bool):
+	cursor.execute('INSERT INTO main (user_id, requests, data, admin) VALUES (?, ?, ?, ?)', (user_id, requests, data, admin))
 	conn.commit()
 
 def get_data():
@@ -41,12 +39,11 @@ def get_data():
 	return data
 
 #инициализируем бота
-bot = Bot(token=TOKEN)
+bot = Bot(token=token)
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 
 # logg
-logs = -1001709553341
 logging.basicConfig(level=logging.INFO)
 
 @dp.message_handler(commands = ["start"])
@@ -57,9 +54,9 @@ async def start(message: types.Message):
 		us_name = message.from_user.first_name
 		us_sname = message.from_user.last_name
 		username = message.from_user.username
-		db_table_val(user_id=us_id, message=0, admin=False, mute=0, message_trand=0, message_flood=0, message_game=0, username='{username}', lastmessage=get_data(), mess=0)
+		db(user_id=us_id, requests=0, data=get_data(), admin=False)
 
-	await message.answer("Привет!")
+	await message.answer(f"{us_name}, привет!\n")
 
 @dp.message_handler(commands = ["verif"])
 async def ver(message: types.Message):
