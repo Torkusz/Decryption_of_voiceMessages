@@ -5,5 +5,5 @@
     <img src="https://github.com/blackcater/blackcater/raw/main/images/Hi.gif" height="32">
 </h1>
 
-Decryption of voice messages in telegram
+Логика бота? (Думаю можно так назвать)
 ![Image](https://github.com/Torkusz/Decryption_of_voiceMessages/blob/main/source/idea.jpg)
