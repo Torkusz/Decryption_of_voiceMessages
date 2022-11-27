@@ -84,13 +84,32 @@ async def help(message: types.Message):
 
 @dp.message_handler(commands = ["get"])
 async def start(message: types.Message):
-	select_movies_query = "SELECT user_id, data, text FROM requests"
+	select_movies_query = f"SELECT user_id, data, text FROM requests WHERE user_id = '{message.from_user.id}'"
 	cursor.execute(select_movies_query)
 	result = cursor.fetchall()
 	if result is None:
 		await message.answer(f"{message.from_user.first_name}, кажется тебя нет в боте, нажми /start")
 	else:
-		await message.answer("📊Данные:{}".format("".join(["\n"+str(f"DATA:%s  TEXT:%s"%(row[1],row[2])) for row in result])))
+		await message.answer("📊Данные:\nЧтобы очистить нажмите /delete{}".format("".join(["\n"+str(f"DATA:%s  TEXT:%s"%(row[1],row[2])) for row in result])))
+
+@dp.message_handler(commands="delete")
+async def delite(message: types.Message):
+	cursor.execute(f"DELETE FROM requests WHERE user_id = {message.from_user.id}")
+	conn.commit()
+	await message.answer("Удалил")
+
+@dp.message_handler(commands=("me"))
+async def me(message: types.Message):
+	cursor.execute(f"SELECT * FROM main WHERE user_id={message.from_user.id}")
+	result = cursor.fetchone()
+	emoji = {
+			"0" : "🟥",
+			"True" : "🟩"
+			}
+	if result[3] in emoji:
+				wd1 = emoji[result[3]]
+	await message.answer(f"☃: @{message.from_user.username}\n📊Запросов - {result[1]}\n📅Дата регистрации - {result[2]}\nAdmin - {wd1}", parse_mode="HTML", disable_web_page_preview=True)
+
 
 @dp.message_handler(content_types=ContentType.VOICE)
 async def check(message: types.Message):
@@ -115,6 +134,8 @@ async def check(message: types.Message):
 		os.replace(f"{fname}.wav", f"audio/{fname}_{str(message.from_user.id)}.wav")
 		os.remove(fname)
 		req(user_id=message.from_user.id, data=get_data(), text=result)
+		cursor.execute(f"UPDATE main SET requests=requests+1 WHERE user_id = {message.from_user.id}")
+		conn.commit()
 	except sr.UnknownValueError as e:
 		await message.answer("Прошу прощения, но я не разобрал сообщение, или оно поустое...")
 	

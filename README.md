@@ -7,3 +7,5 @@
 
 Логика бота? (Думаю можно так назвать)
 ![Image](https://github.com/Torkusz/Decryption_of_voiceMessages/blob/main/source/idea.jpg)
+❌Работает от апи гугла❌
+p.s.надеюсь исправлю
