@@ -10,9 +10,11 @@ from aiogram.types.message import ContentType
 import aiogram.utils.markdown as fmt
 import asyncio
 
+import soundfile as sf
+import speech_recognition as sr
+
 import logging
 from time import time
-from time import sleep
 import datetime
 import random
 from random import randint
@@ -20,10 +22,10 @@ import re
 import json
 import sqlite3
 import requests
-import matplotlib.pyplot as plt
 import numpy as np
 import os
 from conf import *
+import shutil
 
 #Database
 conn = sqlite3.connect('db.db', check_same_thread=False)
@@ -41,6 +43,14 @@ def get_data(): #Getting the current date
 	now = datetime.datetime.now()
 	data = str(now.year) + "-" + str(now.month) + "-" + str(now.day) + " " + str(now.hour) + ":" + str(now.minute) + ":" + str(now.second)
 	return data
+
+def audio_to_text(dest_name: str):
+	r = sr.Recognizer()
+	message = sr.AudioFile(dest_name)
+	with message as source:
+		audio = r.record(source)
+	result = r.recognize_google(audio, language="ru_RU")
+	return result
 
 #initializing the bot
 bot = Bot(token=token)
@@ -80,10 +90,30 @@ async def start(message: types.Message):
 	if result is None:
 		await message.answer(f"{message.from_user.first_name}, кажется тебя нет в боте, нажми /start")
 	else:
-		await message.answer("📊Данные:{}".format("".join(["\n"+str(f"ID:%s  DATA:%s  TEXT:%s"%(row[0],row[1],row[2])) for row in result])))
+		await message.answer("📊Данные:{}".format("".join(["\n"+str(f"DATA:%s  TEXT:%s"%(row[1],row[2])) for row in result])))
 
 @dp.message_handler(content_types=ContentType.VOICE)
 async def check(message: types.Message):
+	try:
+		id = await bot.send_message(message.chat.id, f"Слушаю и понимаю...")
+		file_info = await bot.get_file(message.voice.file_id)
+		path = file_info.file_path
+		fname = os.path.basename(path)
+		doc = requests.get('https://api.telegram.org/file/bot{0}/{1}'.format(token, file_info.file_path))
+		with open(fname, 'wb') as f:
+			f.write(doc.content)
+		data, samplerate = sf.read(f'{fname}')
+		sf.write(f'{fname}.wav', data, samplerate)
+		shutil.copy({fname}, "audio")
+		
+		result = audio_to_text(fname+'.wav')
+		# await bot.send_message(message.from_user.id, format(result))
+		await bot.edit_message_text(chat_id=id.chat.id, message_id=id.message_id, text=f"Вот перевод:\n{result}")
+		os.remove(fname+'.wav')
+		os.remove(fname)
+		req(user_id=message.from_user.id, data=get_data(), text=result)
+	except sr.UnknownValueError as e:
+		await message.answer("Прошу прощения, но я не разобрал сообщение, или оно поустое...")
 	
 
 if __name__ == "__main__":
