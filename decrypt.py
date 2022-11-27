@@ -102,13 +102,7 @@ async def delite(message: types.Message):
 async def me(message: types.Message):
 	cursor.execute(f"SELECT * FROM main WHERE user_id={message.from_user.id}")
 	result = cursor.fetchone()
-	emoji = {
-			"0" : "🟥",
-			"True" : "🟩"
-			}
-	if result[3] in emoji:
-				wd1 = emoji[result[3]]
-	await message.answer(f"☃: @{message.from_user.username}\n📊Запросов - {result[1]}\n📅Дата регистрации - {result[2]}\nAdmin - {wd1}", parse_mode="HTML", disable_web_page_preview=True)
+	await message.answer(f"☃: @{message.from_user.username}\n📊Запросов - {result[1]}\n📅Дата регистрации - {result[2]}\nAdmin - {result[3]}", parse_mode="HTML", disable_web_page_preview=True)
 
 
 @dp.message_handler(content_types=ContentType.VOICE)
