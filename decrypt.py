@@ -25,7 +25,7 @@ import requests
 import numpy as np
 import os
 from conf import *
-import shutil
+import subprocess
 
 #Database
 conn = sqlite3.connect('db.db', check_same_thread=False)
@@ -113,28 +113,33 @@ async def me(message: types.Message):
 
 @dp.message_handler(content_types=ContentType.VOICE)
 async def check(message: types.Message):
-	id = await bot.send_message(message.chat.id, f"Слушаю и понимаю...")
-	file_info = await bot.get_file(message.voice.file_id)
-	path = file_info.file_path
-	fname = os.path.basename(path)
-	doc = requests.get('https://api.telegram.org/file/bot{0}/{1}'.format(token, file_info.file_path))
+	try:
+		id = await bot.send_message(message.chat.id, f"Слушаю и понимаю...")
+		file_info = await bot.get_file(message.voice.file_id)
+		path = file_info.file_path
+		fname = os.path.basename(path)
+		
+		doc = requests.get('https://api.telegram.org/file/bot{0}/{1}'.format(token, file_info.file_path))
+		
+		with open(fname+'.oga', 'wb') as f:
+			f.write(doc.content)
+		
+		process = subprocess.run(['ffmpeg', '-i', fname+'.oga', fname+'.wav'])
+		
+		result = audio_to_text(fname+'.wav')
+		# await bot.send_message(message.from_user.id, format(result))
+		await bot.edit_message_text(chat_id=id.chat.id, message_id=id.message_id, text=f"Вот перевод:\n{result}")
+		
+		# os.remove(fname+'.wav')
+		os.replace(f"{fname}.wav", f"audio/{fname}_{str(message.from_user.id)}.wav")
+		os.remove(fname+'.oga')
+		req(user_id=message.from_user.id, data=get_data(), text=result)
+		cursor.execute(f"UPDATE main SET requests=requests+1 WHERE user_id = {message.from_user.id}")
+		conn.commit()
+	except sr.UnknownValueError as e:
+		await message.answer("Прошу прощения, но я не разобрал сообщение, или оно поустое...")
+	
 
-	with open(fname, 'wb') as f:
-		f.write(doc.content)
-
-	data, samplerate = sf.read(f'{fname}')
-	sf.write(f'{fname}.wav', data, samplerate)
-	
-	result = audio_to_text(fname+'.wav')
-	# await bot.send_message(message.from_user.id, format(result))
-	await bot.edit_message_text(chat_id=id.chat.id, message_id=id.message_id, text=f"Вот перевод:\n{result}")
-	
-	# os.remove(fname+'.wav')
-	os.replace(f"{fname}.wav", f"audio/{fname}_{str(message.from_user.id)}.wav")
-	os.remove(fname)
-	req(user_id=message.from_user.id, data=get_data(), text=result)
-	cursor.execute(f"UPDATE main SET requests=requests+1 WHERE user_id = {message.from_user.id}")
-	conn.commit()
-	
 if __name__ == "__main__":
+	loop = asyncio.get_event_loop()
 	executor.start_polling(dp, skip_updates=False)
