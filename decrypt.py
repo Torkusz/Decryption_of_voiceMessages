@@ -98,18 +98,21 @@ async def check(message: types.Message):
 		id = await bot.send_message(message.chat.id, f"Слушаю и понимаю...")
 		file_info = await bot.get_file(message.voice.file_id)
 		path = file_info.file_path
-		fname = os.path.basename(path)
+		fname = os.path.basename(path) 
 		doc = requests.get('https://api.telegram.org/file/bot{0}/{1}'.format(token, file_info.file_path))
+
 		with open(fname, 'wb') as f:
 			f.write(doc.content)
+
 		data, samplerate = sf.read(f'{fname}')
 		sf.write(f'{fname}.wav', data, samplerate)
-		shutil.copy({fname}, "audio")
 		
 		result = audio_to_text(fname+'.wav')
 		# await bot.send_message(message.from_user.id, format(result))
 		await bot.edit_message_text(chat_id=id.chat.id, message_id=id.message_id, text=f"Вот перевод:\n{result}")
-		os.remove(fname+'.wav')
+		
+		# os.remove(fname+'.wav')
+		os.replace(f"{fname}.wav", f"audio/{fname}_{str(message.from_user.id)}.wav")
 		os.remove(fname)
 		req(user_id=message.from_user.id, data=get_data(), text=result)
 	except sr.UnknownValueError as e:
