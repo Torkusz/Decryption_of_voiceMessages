@@ -27,6 +27,11 @@ import os
 from conf import *
 import subprocess
 
+import os.path
+
+# import xlwt
+from openpyxl import load_workbook, Workbook
+
 #Database
 conn = sqlite3.connect('db.db', check_same_thread=False)
 cursor = conn.cursor()
@@ -104,6 +109,10 @@ async def me(message: types.Message):
 	result = cursor.fetchone()
 	await message.answer(f"☃: @{message.from_user.username}\n📊Запросов - {result[1]}\n📅Дата регистрации - {result[2]}\nAdmin - {result[3]}", parse_mode="HTML", disable_web_page_preview=True)
 
+@dp.message_handler(commands="file")
+async def delite(message: types.Message):
+	doc = open('xl/' + str(message.from_user.id) + '.xlsx', 'rb')
+	await message.reply_document(doc)
 
 @dp.message_handler(content_types=ContentType.VOICE)
 async def check(message: types.Message):
@@ -130,6 +139,28 @@ async def check(message: types.Message):
 		req(user_id=message.from_user.id, data=get_data(), text=result)
 		cursor.execute(f"UPDATE main SET requests=requests+1 WHERE user_id = {message.from_user.id}")
 		conn.commit()
+
+		# book = xlwt.Workbook(encoding="utf-8")
+		# sheet1 = book.add_sheet(str(message.from_user.id))
+		# sheet1.write(1, 0, result)
+		# book.save("test.xls")
+
+		if os.path.exists('xl/' + str(message.from_user.id) + '.xlsx') == True:
+			fn = 'xl/' + str(message.from_user.id) + '.xlsx'
+			wb = load_workbook(fn)
+			ws = wb.active
+			ws.append([(str(get_data())), result])
+			wb.save(fn)
+			wb.close
+		else:
+			wb = Workbook()
+			ws = wb.active
+			ws.append([(str(get_data())), result])
+			wb.save('xl/' + str(message.from_user.id) + '.xlsx')
+			wb.close
+
+		# ws = wb['data']
+
 	except sr.UnknownValueError as e:
 		await message.answer("Прошу прощения, но я не разобрал сообщение, или оно поустое...")
 	
