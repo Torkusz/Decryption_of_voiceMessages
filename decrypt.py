@@ -148,14 +148,32 @@ async def check(message: types.Message):
 		if os.path.exists('xl/' + str(message.from_user.id) + '.xlsx') == True:
 			fn = 'xl/' + str(message.from_user.id) + '.xlsx'
 			wb = load_workbook(fn)
-			ws = wb.active
-			ws.append([(str(get_data())), result])
+			if result.startswith('купить') == True:
+				ws2 = wb['Список покупок']
+				ws2.append([(str(get_data())), result])
+			elif result.startswith('сделать') == True:
+				ws3 = wb['Задачи']
+				ws3.append([(str(get_data())), result])
+			else:
+				ws1 = wb['Заметки']
+				ws1.append([(str(get_data())), result])
 			wb.save(fn)
 			wb.close
 		else:
 			wb = Workbook()
-			ws = wb.active
-			ws.append([(str(get_data())), result])
+			# ws = wb.active
+			ws1 = wb.create_sheet("Заметки", -2)
+			ws2 = wb.create_sheet("Список покупок", -1)
+			ws3 = wb.create_sheet("Задачи", 0)
+			if result.startswith('купить') == True:
+				ws2 = wb['Список покупок']
+				ws2.append([(str(get_data())), result])
+			elif result.startswith('сделать') == True:
+				ws3 = wb['Задачи']
+				ws3.append([(str(get_data())), result])
+			else:
+				ws1 = wb['Заметки']
+				ws1.append([(str(get_data())), result])
 			wb.save('xl/' + str(message.from_user.id) + '.xlsx')
 			wb.close
 
