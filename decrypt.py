@@ -114,6 +114,49 @@ async def delite(message: types.Message):
 	doc = open('xl/' + str(message.from_user.id) + '.xlsx', 'rb')
 	await message.reply_document(doc)
 
+@dp.message_handler(content_types=ContentType.TEXT)
+async def check(message: types.Message):
+	try:
+		cursor.execute(f"UPDATE main SET requests=requests+1 WHERE user_id = {message.from_user.id}")
+		conn.commit()
+		text = message.text.lower()
+
+		if os.path.exists('xl/' + str(message.from_user.id) + '.xlsx') == True:
+			fn = 'xl/' + str(message.from_user.id) + '.xlsx'
+			wb = load_workbook(fn)
+			if text.startswith('купить') == True:
+				ws2 = wb['Список покупок']
+				ws2.append([(str(get_data())), text])
+			elif text.startswith('сделать') == True:
+				ws3 = wb['Задачи']
+				ws3.append([(str(get_data())), text])
+			else:
+				ws1 = wb['Заметки']
+				ws1.append([(str(get_data())), text])
+			wb.save(fn)
+			wb.close
+		else:
+			wb = Workbook()
+			ws1 = wb.create_sheet("Заметки", -2)
+			ws2 = wb.create_sheet("Список покупок", -1)
+			ws3 = wb.create_sheet("Задачи", 0)
+			if text.startswith('купить') == True:
+				ws2 = wb['Список покупок']
+				ws2.append([(str(get_data())), text])
+			elif text.startswith('сделать') == True:
+				ws3 = wb['Задачи']
+				ws3.append([(str(get_data())), text])
+			else:
+				ws1 = wb['Заметки']
+				ws1.append([(str(get_data())), text])
+			wb.save('xl/' + str(message.from_user.id) + '.xlsx')
+			wb.close
+
+		await message.answer(f"Записал:\n{text}")
+	except sr.UnknownValueError as e:
+		await message.answer("Прошу прощения, но я не разобрал сообщение, или оно поустое...")
+	
+
 @dp.message_handler(content_types=ContentType.VOICE)
 async def check(message: types.Message):
 	try:
