@@ -24,7 +24,7 @@ import sqlite3
 import requests
 import numpy as np
 import os
-from conf import *
+from config import *
 import subprocess
 
 import os.path
@@ -225,7 +225,6 @@ async def check(message: types.Message):
 	except sr.UnknownValueError as e:
 		await message.answer("Прошу прощения, но я не разобрал сообщение, или оно поустое...")
 	
-
 if __name__ == "__main__":
 	loop = asyncio.get_event_loop()
 	executor.start_polling(dp, skip_updates=False)
